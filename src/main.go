@@ -375,13 +375,14 @@ func main() {
 
 	rl.SetConfigFlags(rl.FlagWindowHighdpi)
 
-	rl.InitWindow(1600, 1600, "a Maze ing")
 
 	var Resolution rl.Vector2
 	
-	Resolution.X = 1600
-	Resolution.Y = 1600
-	rl.SetTargetFPS(240)
+	Resolution.X = 1200
+	Resolution.Y = 1200
+	rl.InitWindow(int32(Resolution.X), int32(Resolution.Y), "a Maze ing")
+
+	rl.SetTargetFPS(120)
 
 	Mazesize := int32(min(Resolution.X, Resolution.Y) / float32(CellSizePx)) - 1
 
@@ -404,6 +405,9 @@ func main() {
 	solve := false
 	showingpath := false
 	resetting := false
+
+	waitTillReset := false
+	resettimer := time.Now()
 
 	iterations := 0
 
@@ -430,14 +434,14 @@ func main() {
 			}	
 		}
 		if showingpath {
-			for _, ID := range Path {
+			for _, ID := range Path[:len(Path) - 1] {
 				DrawHelpPoint(ID, Mazesize, MazeRect, color.RGBA{255,155,0,255})
 			}
 		}
 		rl.EndDrawing()
 
 
-		if (time.Since(start) >= time.Duration(speed)) && enabled && !solve {
+		if (time.Since(start) >= time.Duration(speed)) && enabled && !solve  && !waitTillReset{
 			start = time.Now()
 			Maze.OriginShiftStep(Mazesize, &originpoint)
 			Maze.UpdateWalls(Mazesize, &originpoint)
@@ -445,11 +449,21 @@ func main() {
 		if time.Since(start) >= time.Duration(speed) && solve && enabled{
 			start = time.Now()
 			if IDInStack(&MainStack, int32(len(Maze) - 1)) {
-				resetting = FindSolutionStep(&MainStack, &Path)
+				waitTillReset = FindSolutionStep(&MainStack, &Path)
 				showingpath = true
+				if waitTillReset {
+					resettimer = time.Now()
+					solve = false
+
+				}
 			}else {
 				FloodFillStep(&MainStack, Maze, Mazesize)
 			}
+		}
+
+		if time.Since(resettimer) >= time.Duration(5 * math.Pow(10, 9)) && waitTillReset && enabled {
+			resetting = true
+			waitTillReset = false
 		}
 
 		if rl.IsKeyPressed(rl.KeySpace){
@@ -475,6 +489,7 @@ func main() {
 			showingpath = false
 			resetting = false
 			iterations = 0
+			waitTillReset = false
 			MainStack = stack{stackobj{0, -1, -1}}
 			Path = []int32{Mazesize * Mazesize - 1}		
 			Maze = CreateMaze(Mazesize * Mazesize)
