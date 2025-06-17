@@ -435,7 +435,7 @@ func main() {
 		}
 		if showingpath {
 			for _, ID := range Path[:len(Path) - 1] {
-				DrawHelpPoint(ID, Mazesize, MazeRect, color.RGBA{255,155,0,255})
+				DrawHelpPoint(ID, Mazesize, MazeRect, color.RGBA{255,255,255,255})
 			}
 		}
 		rl.EndDrawing()
