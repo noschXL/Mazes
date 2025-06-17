@@ -19,6 +19,7 @@ type CellList []cell
 
 var WallCol = color.RGBA{R: 0, G: 255, B: 0, A: 255}
 var CellSizePx int32 = 20
+var FPS int32 = 120
 
 const (
 	NORTH = 0
@@ -387,7 +388,7 @@ func main() {
 	Mazesize := int32(min(Resolution.X, Resolution.Y) / float32(CellSizePx)) - 1
 
 	MazeWidth := int32(min(Resolution.X, Resolution.Y)) - CellSizePx * 2 //buffer so it doesnt fill the edges
-	MazeRect := rl.Rectangle{X: float32(CellSizePx) / 2, Y: float32(CellSizePx) / 2 + 20, Width: float32(MazeWidth), Height: float32(MazeWidth)}
+	MazeRect := rl.Rectangle{X: float32(CellSizePx) / 2, Y: float32(CellSizePx) / 2 + 40, Width: float32(MazeWidth), Height: float32(MazeWidth)}
 
 	Maze := CreateMaze(Mazesize * Mazesize)
 	Maze.Setup(ORIGIN, Mazesize)
@@ -397,8 +398,10 @@ func main() {
 	MainStack := stack{stackobj{0, -1, -1}}
 
 	TopText := "Originshift - Press space to start/stop"
+	BelowText := "Progress: "
 
 	TextWidth := rl.MeasureText(TopText, 20)
+	BelowTextWidth := rl.MeasureText(BelowText, 20)
 
 	enabled := false
 	help1 := true
@@ -410,6 +413,7 @@ func main() {
 	resettimer := time.Now()
 
 	iterations := 0
+	progress := 0.0
 
 	var Path []int32 = []int32{Mazesize * Mazesize - 1}
 
@@ -423,7 +427,8 @@ func main() {
 
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.DarkGray)
-		rl.DrawText(TopText, 500 - TextWidth / 2, 0, 20, rl.RayWhite)
+		rl.DrawText(TopText, (int32(Resolution.X) - TextWidth) / 2, 0, 20, rl.RayWhite)
+		rl.DrawText(BelowText, (int32(Resolution.X) - TextWidth) / 2, 20, 20, rl.RayWhite)
 		DrawMaze(Maze, Mazesize, WALL, MazeRect)
 		if help1 && !solve && !showingpath{
 			DrawHelpPoint(originpoint, Mazesize, MazeRect, color.RGBA{255,0,0,255})
@@ -438,14 +443,22 @@ func main() {
 				DrawHelpPoint(ID, Mazesize, MazeRect, color.RGBA{255,255,255,255})
 			}
 		}
+
+		rl.DrawRectangleLines((int32(Resolution.X) - TextWidth) / 2 + BelowTextWidth, 20, TextWidth - BelowTextWidth, 20, color.RGBA{255,255,255,255})
+		rl.DrawRectangle((int32(Resolution.X) - TextWidth) / 2 + BelowTextWidth, 20, int32(float64(TextWidth - BelowTextWidth) * progress), 20, color.RGBA{255,255,255,255})
 		rl.EndDrawing()
 
 
 		if (time.Since(start) >= time.Duration(speed)) && enabled && !solve  && !waitTillReset{
 			start = time.Now()
-			Maze.OriginShiftStep(Mazesize, &originpoint)
+			for i := 0.0; i < math.Pow(float64(Mazesize), 3) / float64(FPS * 20); i++{
+				Maze.OriginShiftStep(Mazesize, &originpoint)
+			}
+			iterations += int(math.Pow(float64(Mazesize), 3) / float64(FPS * 20))
 			Maze.UpdateWalls(Mazesize, &originpoint)
+			progress = float64(iterations) / float64(math.Pow(float64(Mazesize), 3))
 		}
+
 		if time.Since(start) >= time.Duration(speed) && solve && enabled{
 			start = time.Now()
 			if IDInStack(&MainStack, int32(len(Maze) - 1)) {
@@ -479,7 +492,7 @@ func main() {
 		if rl.IsKeyDown(rl.KeyRight) {
 			speed -= 1000000
 		}
-		if rl.IsKeyPressed(rl.KeyTwo) || iterations > int(Mazesize * Mazesize * Mazesize){
+		if (rl.IsKeyPressed(rl.KeyTwo) || iterations > int(Mazesize * Mazesize * Mazesize)) && !waitTillReset{
 			solve = true
 		}
 		if rl.IsKeyPressed(rl.KeyR)  || resetting{
