@@ -283,6 +283,21 @@ func DrawHelpSquare(point int32, size int32, MazeRect rl.Rectangle, col color.RG
 	
 }
 
+func DrawLinesBetweenPoints (PointList []int32, size int32, MazeRect rl.Rectangle,col color.RGBA) {
+
+	if len(PointList) < 2 {
+		return
+	}
+
+	for i := 0; i < len(PointList) - 1; i++ {
+		x1 := (PointList[i] % size) * CellSizePx + int32(MazeRect.X) + CellSizePx / 2
+		y1 := (PointList[i] / size) * CellSizePx + int32(MazeRect.Y) + CellSizePx / 2
+		x2 := (PointList[i + 1] % size) * CellSizePx + int32(MazeRect.X) + CellSizePx / 2 
+		y2 := (PointList[i + 1] / size) * CellSizePx + int32(MazeRect.Y) + CellSizePx / 2 
+
+		rl.DrawLineEx(rl.Vector2{X: float32(x1),Y: float32(y1)}, rl.Vector2{X: float32(x2),Y: float32(y2)}, float32(CellSizePx) / 2, col)
+	}
+}
 
 type stack []stackobj
 
@@ -442,6 +457,7 @@ func main() {
 			for _, ID := range Path[:len(Path) - 1] {
 				DrawHelpPoint(ID, Mazesize, MazeRect, color.RGBA{255,255,255,255})
 			}
+			DrawLinesBetweenPoints(Path[:len(Path) - 1], Mazesize, MazeRect, color.RGBA{255,255,255,255})
 		}
 
 		rl.DrawRectangleLines((int32(Resolution.X) - TextWidth) / 2 + BelowTextWidth, 20, TextWidth - BelowTextWidth, 20, color.RGBA{255,255,255,255})
@@ -454,7 +470,7 @@ func main() {
 			for i := 0.0; i < math.Pow(float64(Mazesize), 3) / float64(FPS * 20); i++{
 				Maze.OriginShiftStep(Mazesize, &originpoint)
 			}
-			iterations += int(math.Pow(float64(Mazesize), 3) / float64(FPS * 20))
+			iterations += int(math.Pow(float64(Mazesize), 3) / float64(FPS * 20)) + 1
 			Maze.UpdateWalls(Mazesize, &originpoint)
 			progress = float64(iterations) / float64(math.Pow(float64(Mazesize), 3))
 		}
