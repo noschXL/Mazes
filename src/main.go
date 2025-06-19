@@ -18,7 +18,7 @@ type cell struct {
 type CellList []cell
 
 var WallCol = color.RGBA{R: 0, G: 255, B: 0, A: 255}
-var CellSizePx int32 = 20
+var CellSizePx int32 = 10
 var FPS int32 = 120
 
 const (
@@ -51,18 +51,19 @@ func DrawMaze(maze CellList,size int32 ,mode int, MazeRect rl.Rectangle) {
 		for i, c := range maze {
 			x := (int32(i) % size) * CellSizePx + int32(MazeRect.X)
 			y := (int32(i) / size) * CellSizePx + int32(MazeRect.Y)
+
 		
 			if c.Walls[NORTH] {
-				rl.DrawLine(x, y, x + CellSizePx, y, WallCol)
+				rl.DrawLineEx(rl.Vector2{float32(x), float32(y)},rl.Vector2{float32(x + CellSizePx),float32(y)}, float32(CellSizePx / 10) , WallCol)
 			}
 			if c.Walls[EAST] {
-				rl.DrawLine(x + CellSizePx, y, x+CellSizePx, y+CellSizePx, WallCol)
+				rl.DrawLineEx(rl.Vector2{float32(x + CellSizePx), float32(y)}, rl.Vector2{float32(x+CellSizePx),float32(y+CellSizePx)}, float32(CellSizePx) / 10,WallCol)
 			}
-			if c.Walls[SOUTH] {
-				rl.DrawLine(x, y+CellSizePx, x+CellSizePx, y+CellSizePx, WallCol)
+			if c.Walls[SOUTH] {	
+				rl.DrawLineEx(rl.Vector2{float32(x), float32(y + CellSizePx)}, rl.Vector2{float32(x+CellSizePx),float32(y+CellSizePx)}, float32(CellSizePx) / 10,WallCol)
 			}
 			if c.Walls[WEST] {
-				rl.DrawLine(x, y, x, y+CellSizePx, WallCol)
+				rl.DrawLineEx(rl.Vector2{float32(x), float32(y)}, rl.Vector2{float32(x),float32(y+CellSizePx)}, float32(CellSizePx) / 10,WallCol)
 			}
 		}
 	}
@@ -189,6 +190,8 @@ func (maze CellList) Setup (mazetype int32, size int32) {
 			if int32(i) % size == size - 1 {
 				maze[i].Walls[EAST] = true
 			}
+
+			printwalls(maze[i].Walls)
 		}
 	}else if mazetype == ORIGIN {
 		for i := range maze{
@@ -398,7 +401,7 @@ func main() {
 	Resolution.Y = 1200
 	rl.InitWindow(int32(Resolution.X), int32(Resolution.Y), "a Maze ing")
 
-	rl.SetTargetFPS(120)
+	rl.SetTargetFPS(FPS)
 
 	Mazesize := int32(min(Resolution.X, Resolution.Y) / float32(CellSizePx)) - 1
 
@@ -455,9 +458,9 @@ func main() {
 		}
 		if showingpath {
 			for _, ID := range Path[:len(Path) - 1] {
-				DrawHelpPoint(ID, Mazesize, MazeRect, color.RGBA{255,255,255,255})
+				DrawHelpPoint(ID, Mazesize, MazeRect, color.RGBA{255,155,0,255})
 			}
-			DrawLinesBetweenPoints(Path[:len(Path) - 1], Mazesize, MazeRect, color.RGBA{255,255,255,255})
+			DrawLinesBetweenPoints(Path[:len(Path) - 1], Mazesize, MazeRect, color.RGBA{255,155,0,255})
 		}
 
 		rl.DrawRectangleLines((int32(Resolution.X) - TextWidth) / 2 + BelowTextWidth, 20, TextWidth - BelowTextWidth, 20, color.RGBA{255,255,255,255})
